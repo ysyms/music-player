@@ -243,7 +243,7 @@ async function playSong(idx) {
   currentLineIdx = -1;
   renderLyrics();
 
-  const meta = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(s._meta)))));
+  const meta = encodeURIComponent(JSON.stringify(s._meta));
 
   // Fetch audio + lyrics in parallel
   const [audioRes, lyricsRes] = await Promise.allSettled([

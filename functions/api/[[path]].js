@@ -248,7 +248,7 @@ export async function onRequest(ctx) {
     // GET /api/lyrics?p=kg|ne|qq&m=base64(meta)
     if (route === 'lyrics') {
       const platform = url.searchParams.get('p');
-      const meta = JSON.parse(decodeURIComponent(escape(atob(url.searchParams.get('m') || 'e30='))));
+      const meta = JSON.parse(decodeURIComponent(url.searchParams.get('m') || '{}'));
       let result;
       if (platform === 'kg') result = await kgLyrics(meta);
       else if (platform === 'ne') result = await neLyrics(meta);
@@ -260,7 +260,7 @@ export async function onRequest(ctx) {
     // GET /api/audio?p=kg|ne&m=base64(meta)
     if (route === 'audio') {
       const platform = url.searchParams.get('p');
-      const meta = JSON.parse(decodeURIComponent(escape(atob(url.searchParams.get('m') || 'e30='))));
+      const meta = JSON.parse(decodeURIComponent(url.searchParams.get('m') || '{}'));
       let audioUrl;
       if (platform === 'kg') audioUrl = await kgAudio(meta);
       else if (platform === 'ne') audioUrl = await neAudio(meta);
