@@ -124,13 +124,16 @@ async function kgLyrics(meta) {
 }
 
 async function kgAudio(meta) {
-  // Try to get play URL via kugou songinfo API
   try {
+    // Endpoint 1: songinfo
     const r = await fetch(`https://wwwapi.kugou.com/play/songinfo?cid=205361747&userid=0&appid=1014&clientver=20000&mid=${meta.hash}&platid=4&quality=flac`, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.kugou.com/' }
+      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10)', 'Referer': 'https://www.kugou.com/' }
     });
     const j = await r.json();
-    return j.data?.play_url || j.url || null;
+    const url = j.data?.play_url || j.data?.url || j.url;
+    if (url) return url;
+    // Endpoint 2: m3w shortlink
+    return `https://m3w.cn/p/${meta.hash}`;
   } catch { return null; }
 }
 
@@ -169,15 +172,8 @@ async function neLyrics(meta) {
 }
 
 async function neAudio(meta) {
-  try {
-    const r = await fetch(`https://music.163.com/song/media/outer/url?id=${meta.id}.mp3`, {
-      headers: NE_HEADERS, redirect: 'follow'
-    });
-    if (r.ok && r.url && !r.url.includes('music.163.com/404') && !r.url.includes('music.163.com/song/media')) {
-      return r.url;
-    }
-    return null;
-  } catch { return null; }
+  // Return direct URL — browser <audio> follows redirect natively, no CORS needed
+  return `https://music.163.com/song/media/outer/url?id=${meta.id}.mp3`;
 }
 
 // ─── QQ ───────────────────────────────────────────────────────────────────────
