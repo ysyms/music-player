@@ -123,26 +123,18 @@ async function kgLyrics(meta) {
   return { format: 'krc', content: krc };
 }
 
+async function ytdlpAudio(name, artist) {
+  const q = encodeURIComponent(`${artist} ${name}`.trim());
+  const r = await fetch(`https://us.icpgraph.com:7797/audio?name=${encodeURIComponent(name)}&artist=${encodeURIComponent(artist)}`, {
+    signal: AbortSignal.timeout(25000)
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.url || null;
+}
+
 async function kgAudio(meta) {
-  try {
-    // Try tx3g API (open kugou play url)
-    const r = await fetch(`https://wwwapi.kugou.com/play/songinfo?cid=205361747&userid=0&appid=1014&clientver=20000&mid=${meta.hash}&platid=4&quality=flac&token=`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14; SM-S918B)', 'Referer': 'https://www.kugou.com/', 'Origin': 'https://www.kugou.com' }
-    });
-    const j = await r.json();
-    const url = j.data?.play_url || j.data?.url || j.play_url;
-    if (url) return url;
-  } catch {}
-  try {
-    // Fallback: tikhub-style open API
-    const r2 = await fetch(`https://api.kugou.com/yy/index.php?r=play/getdata&hash=${meta.hash}&appid=1014&mid=0&pid=2&platid=4&quality=flac&userid=-1`, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.kugou.com/' }
-    });
-    const j2 = await r2.json();
-    const url2 = j2.data?.play_url;
-    if (url2) return url2;
-  } catch {}
-  return null;
+  return ytdlpAudio(meta.songname || '', meta.singername || '');
 }
 
 // ─── NetEase ──────────────────────────────────────────────────────────────────
@@ -180,8 +172,8 @@ async function neLyrics(meta) {
 }
 
 async function neAudio(meta) {
-  // Return direct URL — browser <audio> follows redirect natively, no CORS needed
-  return `https://music.163.com/song/media/outer/url?id=${meta.id}.mp3`;
+  const artist = (meta.ar || []).map(a => a.name).join(' ');
+  return ytdlpAudio(meta.name || '', artist);
 }
 
 // ─── QQ ───────────────────────────────────────────────────────────────────────
