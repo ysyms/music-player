@@ -123,18 +123,18 @@ async function kgLyrics(meta) {
   return { format: 'krc', content: krc };
 }
 
-async function ytdlpAudio(name, artist) {
-  const q = encodeURIComponent(`${artist} ${name}`.trim());
-  const r = await fetch(`https://us.icpgraph.com:7797/audio?name=${encodeURIComponent(name)}&artist=${encodeURIComponent(artist)}`, {
-    signal: AbortSignal.timeout(25000)
-  });
+async function musicdlAudio(platform, name, artist) {
+  const r = await fetch(
+    `https://us.icpgraph.com:7797/audio?p=${platform}&name=${encodeURIComponent(name)}&artist=${encodeURIComponent(artist)}`,
+    { signal: AbortSignal.timeout(60000) }
+  );
   if (!r.ok) return null;
   const j = await r.json();
   return j.url || null;
 }
 
 async function kgAudio(meta) {
-  return ytdlpAudio(meta.songname || '', meta.singername || '');
+  return musicdlAudio('kg', meta.songname || '', meta.singername || '');
 }
 
 // ─── NetEase ──────────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ async function neLyrics(meta) {
 
 async function neAudio(meta) {
   const artist = (meta.ar || []).map(a => a.name).join(' ');
-  return ytdlpAudio(meta.name || '', artist);
+  return musicdlAudio('ne', meta.name || '', artist);
 }
 
 // ─── QQ ───────────────────────────────────────────────────────────────────────
@@ -264,6 +264,7 @@ export async function onRequest(ctx) {
       let audioUrl;
       if (platform === 'kg') audioUrl = await kgAudio(meta);
       else if (platform === 'ne') audioUrl = await neAudio(meta);
+      else if (platform === 'qq') audioUrl = await musicdlAudio('qq', meta.name || '', (meta.singer || []).map(s => s.name).join(' '));
       if (!audioUrl) return json({ error: 'audio unavailable' }, 404);
       return json({ url: audioUrl });
     }
