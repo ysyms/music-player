@@ -169,13 +169,13 @@ async function neLyrics(meta) {
 }
 
 async function neAudio(meta) {
-  // Follow redirect to get final CDN URL
   try {
     const r = await fetch(`https://music.163.com/song/media/outer/url?id=${meta.id}.mp3`, {
-      headers: NE_HEADERS, redirect: 'manual'
+      headers: NE_HEADERS, redirect: 'follow'
     });
-    const loc = r.headers.get('location');
-    if (loc && !loc.includes('music.163.com/404')) return loc;
+    if (r.ok && r.url && !r.url.includes('music.163.com/404') && !r.url.includes('music.163.com/song/media')) {
+      return r.url;
+    }
     return null;
   } catch { return null; }
 }
@@ -252,7 +252,7 @@ export async function onRequest(ctx) {
     // GET /api/lyrics?p=kg|ne|qq&m=base64(meta)
     if (route === 'lyrics') {
       const platform = url.searchParams.get('p');
-      const meta = JSON.parse(atob(url.searchParams.get('m') || 'e30='));
+      const meta = JSON.parse(decodeURIComponent(escape(atob(url.searchParams.get('m') || 'e30='))));
       let result;
       if (platform === 'kg') result = await kgLyrics(meta);
       else if (platform === 'ne') result = await neLyrics(meta);
@@ -264,7 +264,7 @@ export async function onRequest(ctx) {
     // GET /api/audio?p=kg|ne&m=base64(meta)
     if (route === 'audio') {
       const platform = url.searchParams.get('p');
-      const meta = JSON.parse(atob(url.searchParams.get('m') || 'e30='));
+      const meta = JSON.parse(decodeURIComponent(escape(atob(url.searchParams.get('m') || 'e30='))));
       let audioUrl;
       if (platform === 'kg') audioUrl = await kgAudio(meta);
       else if (platform === 'ne') audioUrl = await neAudio(meta);
